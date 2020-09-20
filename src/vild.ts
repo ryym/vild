@@ -1,13 +1,13 @@
 import type { CheckerContainer } from './checker';
 import { createValidator } from './validator';
-import type { Validator } from './validator';
+import type { ChainValidator } from './validator';
 import type { Messages } from './messages';
 
 type CheckerContainerSet = Record<string, CheckerContainer<any, any>>;
 
 export type Vild<Ccs extends CheckerContainerSet> = {
   [K in keyof Ccs]: Ccs[K] extends CheckerContainer<infer V, infer Cs>
-    ? () => Validator<V, Cs>
+    ? () => ChainValidator<V, Cs>
     : never;
 };
 

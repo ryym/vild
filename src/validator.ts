@@ -11,17 +11,17 @@ import type {
 import type { MessagesForCheckerSet, AnyMessages } from './messages';
 import type { Meta } from './meta';
 
-export type ValidatorChain<V, Cs extends CheckerSet> = {
-  [K in keyof Cs]: Cs[K] extends Checker<V, infer Args>
-    ? (...args: Args) => Validator<V, Cs>
-    : never;
-};
-
-export type Tester<V> = {
+export type Validator<V> = {
   test(value: unknown, context?: unknown): ValidationResult<V>;
 };
 
-export type Validator<V, Cs extends CheckerSet> = ValidatorChain<V, Cs> & Tester<V>;
+export type CheckerChain<V, Cs extends CheckerSet> = {
+  [K in keyof Cs]: Cs[K] extends Checker<V, infer Args>
+    ? (...args: Args) => ChainValidator<V, Cs>
+    : never;
+};
+
+export type ChainValidator<V, Cs extends CheckerSet> = CheckerChain<V, Cs> & Validator<V>;
 
 type ValidatorOptions<Cs extends CheckerSet> = {
   locale: () => string | undefined;
@@ -37,10 +37,10 @@ type CheckItem<V> = {
 export const createValidator = <V, Cs extends CheckerSet>(
   checkerContainer: CheckerContainer<V, Cs>,
   options: ValidatorOptions<Cs>
-): Validator<V, Cs> => {
+): ChainValidator<V, Cs> => {
   const { checkers, convert } = checkerContainer;
 
-  class ValidatorInner implements Tester<V> {
+  class ValidatorInner implements Validator<V> {
     constructor(readonly _checks: CheckItem<V>[]) {}
 
     test(originalValue: unknown, context?: unknown): ValidationResult<V> {
@@ -51,18 +51,18 @@ export const createValidator = <V, Cs extends CheckerSet>(
     }
   }
 
-  const chain: ValidatorChain<V, CheckerSet<V>> = {};
+  const chain: CheckerChain<V, CheckerSet<V>> = {};
   for (const name of Object.keys(checkers)) {
     chain[name] = function (this: ValidatorInner, ...args: any[]) {
       const check = checkers[name].checkWith(...args) as CheckFn<V>;
       const checks = [...this._checks, { name, check, args }];
-      return (new ValidatorInner(checks) as unknown) as Validator<V, Cs>;
+      return (new ValidatorInner(checks) as unknown) as ChainValidator<V, Cs>;
     };
   }
 
   Object.assign(ValidatorInner.prototype, chain);
 
-  return (new ValidatorInner([]) as unknown) as Validator<V, Cs>;
+  return (new ValidatorInner([]) as unknown) as ChainValidator<V, Cs>;
 };
 
 const validateValue = <V>(
