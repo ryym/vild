@@ -91,3 +91,7 @@ const validateValue = <V>(
   }
   return { errors, value };
 };
+
+export const isValidator = <V>(v: any): v is Validator<V> => {
+  return typeof v.test === 'function';
+};
