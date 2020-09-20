@@ -4,7 +4,16 @@
   "main": "index.js",
   "author": "ryym <ryym.64@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryym/vild"
+  },
+  "main": "index.js",
+  "typings": "dist/types/index.d.ts",
+  "files": ["dist", "index.js"],
   "scripts": {
+    "build": "(test -d dist || mkdir dist) && rm -rf dist && npx tsc",
+    "build:w": "npx tsc -w",
     "lint": "npx eslint --ext js,ts",
     "lint:all": "yarn lint .",
     "fmt:check": "npx prettier --check",
