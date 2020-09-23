@@ -1,7 +1,10 @@
 {
-  "name": "vild",
+  "name": "@ryym/vild",
   "version": "0.0.0",
   "main": "index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "ryym <ryym.64@gmail.com>",
   "license": "MIT",
   "repository": {
