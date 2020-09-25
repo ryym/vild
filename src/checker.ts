@@ -5,10 +5,9 @@ export type CheckedValue<V> = {
   readonly converted: V | undefined;
 };
 
-export type ValidationResult<V> = {
-  readonly errors: ErrorInfo[];
-  readonly value: CheckedValue<V>;
-};
+export class ValidationResult<V> {
+  constructor(readonly errors: ErrorInfo[], readonly value: CheckedValue<V>) {}
+}
 
 export type ErrorInfo = {
   readonly name: string;

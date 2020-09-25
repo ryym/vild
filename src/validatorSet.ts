@@ -5,27 +5,27 @@ export type AnyValidators = {
   [key: string]: Validator<any> | [Validator<any>] | AnyValidators | [AnyValidators];
 };
 
-export type ValidationResultSet<Vs> = Vs extends [infer E]
-  ? Array<ValidationResultSet<E>>
+export type ValidationResultTree<Vs> = Vs extends [infer E]
+  ? Array<ValidationResultTree<E>>
   : Vs extends Validator<infer V>
   ? ValidationResult<V>
-  : { [K in keyof Vs]: ValidationResultSet<Vs[K]> };
+  : { [K in keyof Vs]: ValidationResultTree<Vs[K]> };
 
 export class ValidatorSet<Vs extends AnyValidators> {
   constructor(private readonly _validators: Vs) {}
 
-  testObject<O extends Record<string, unknown>>(values: O): ValidationResultSet<Vs> {
-    const result = this._testObject(values, this._validators);
-    return result as ValidationResultSet<Vs>;
+  testObject<O extends Record<string, unknown>>(values: O): ValidatorSetResult<Vs> {
+    const results = this._testObject(values, this._validators) as ValidationResultTree<Vs>;
+    return new ValidatorSetResult(results);
   }
 
   private _testObject<O extends Record<string, unknown>>(
     values: O,
     validators: AnyValidators
-  ): ValidationResultSet<AnyValidators> {
-    const result = {} as ValidationResultSet<AnyValidators>;
+  ): ValidationResultTree<AnyValidators> {
+    const results = {} as ValidationResultTree<AnyValidators>;
 
-    for (const key of Object.keys(validators)) {
+    for (const key in validators) {
       const validator = validators[key];
       const value = values[key];
 
@@ -35,21 +35,25 @@ export class ValidatorSet<Vs extends AnyValidators> {
         }
         const validator0 = validator[0];
         if (isValidator(validator0)) {
-          result[key] = (value as any[]).map((v) => validator0.test(v));
+          results[key] = (value as any[]).map((v) => validator0.test(v));
         } else {
-          result[key] = (value as any[]).map((v) => this._testObject(v, validator0));
+          results[key] = (value as any[]).map((v) => this._testObject(v, validator0));
         }
       } else if (isValidator(validator)) {
-        result[key] = validator.test(value);
+        results[key] = validator.test(value);
       } else {
-        result[key] = this._testObject((value as any) ?? {}, validator);
+        results[key] = this._testObject((value as any) ?? {}, validator);
       }
     }
 
-    return result;
+    return results;
   }
 }
 
 export const validatorSet = <Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs> => {
   return new ValidatorSet(validators);
 };
+
+export class ValidatorSetResult<Vs extends AnyValidators> {
+  constructor(readonly results: ValidationResultTree<Vs>) {}
+}

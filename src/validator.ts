@@ -1,11 +1,10 @@
-import { isCheckResult } from './checker';
+import { isCheckResult, ValidationResult } from './checker';
 import type {
   Checker,
   CheckFn,
   CheckedValue,
   CheckerSet,
   CheckerContainer,
-  ValidationResult,
   ErrorInfo,
 } from './checker';
 import type { MessagesForCheckerSet, AnyMessages } from './messages';
@@ -89,7 +88,7 @@ const validateValue = <V>(
       value = result.value;
     }
   }
-  return { errors, value };
+  return new ValidationResult(errors, value);
 };
 
 export const isValidator = <V>(v: Validator<V> | Record<string, unknown>): v is Validator<V> => {
