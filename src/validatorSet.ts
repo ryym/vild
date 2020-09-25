@@ -11,6 +11,32 @@ export type ValidationResultTree<Vs> = Vs extends [infer E]
   ? ValidationResult<V>
   : { [K in keyof Vs]: ValidationResultTree<Vs[K]> };
 
+export type AnyValidationResultTree = {
+  [key: string]: AnyValidationResult;
+};
+
+export type AnyValidationResult =
+  | ValidationResult<any>
+  | ValidationResult<any>[]
+  | AnyValidationResultTree
+  | AnyValidationResultTree[];
+
+export type ErrorMessagesTree<Vs> = Vs extends [infer E]
+  ? Array<ErrorMessagesTree<E>>
+  : Vs extends Validator<unknown>
+  ? string[]
+  : { [K in keyof Vs]: ErrorMessagesTree<Vs[K]> };
+
+export type AnyErrorMessagesTree = {
+  [key: string]: AnyErrorMessages;
+};
+
+export type AnyErrorMessages =
+  | string[]
+  | AnyErrorMessages[]
+  | AnyErrorMessagesTree
+  | AnyErrorMessagesTree[];
+
 export class ValidatorSet<Vs extends AnyValidators> {
   constructor(private readonly _validators: Vs) {}
 
@@ -55,5 +81,28 @@ export const validatorSet = <Vs extends AnyValidators>(validators: Vs): Validato
 };
 
 export class ValidatorSetResult<Vs extends AnyValidators> {
+  private _errors?: ErrorMessagesTree<Vs>;
+
   constructor(readonly results: ValidationResultTree<Vs>) {}
+
+  get errors(): ErrorMessagesTree<Vs> {
+    if (this._errors == null) {
+      this._errors = mapResultsToErrors(this.results) as ErrorMessagesTree<Vs>;
+    }
+    return this._errors;
+  }
 }
+
+const mapResultsToErrors = (results: AnyValidationResult): AnyErrorMessages => {
+  if (Array.isArray(results)) {
+    return (results as AnyValidationResult[]).map((r) => mapResultsToErrors(r));
+  }
+  if (results instanceof ValidationResult) {
+    return results.errors.map((e) => e.message);
+  }
+  const errors = {} as Record<string, ErrorMessagesTree<any>>;
+  for (const key in results) {
+    errors[key] = mapResultsToErrors(results[key]);
+  }
+  return errors;
+};
