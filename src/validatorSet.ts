@@ -40,14 +40,18 @@ export type AnyErrorMessages =
 export class ValidatorSet<Vs extends AnyValidators> {
   constructor(private readonly _validators: Vs) {}
 
-  testObject<O extends Record<string, unknown>>(values: O): ValidatorSetResult<Vs> {
-    const results = this._testObject(values, this._validators) as ValidationResultTree<Vs>;
+  testObject<O extends Record<string, unknown>>(
+    values: O,
+    context?: unknown
+  ): ValidatorSetResult<Vs> {
+    const results = this._testObject(values, this._validators, context) as ValidationResultTree<Vs>;
     return new ValidatorSetResult(results);
   }
 
   private _testObject<O extends Record<string, unknown>>(
     values: O,
-    validators: AnyValidators
+    validators: AnyValidators,
+    context?: unknown
   ): ValidationResultTree<AnyValidators> {
     const results = {} as ValidationResultTree<AnyValidators>;
 
@@ -63,12 +67,12 @@ export class ValidatorSet<Vs extends AnyValidators> {
         if (isValidator(validator0)) {
           results[key] = (value as any[]).map((v) => validator0.test(v));
         } else {
-          results[key] = (value as any[]).map((v) => this._testObject(v, validator0));
+          results[key] = (value as any[]).map((v) => this._testObject(v, validator0, context));
         }
       } else if (isValidator(validator)) {
         results[key] = validator.test(value);
       } else {
-        results[key] = this._testObject((value as any) ?? {}, validator);
+        results[key] = this._testObject((value as any) ?? {}, validator, context);
       }
     }
 
