@@ -76,10 +76,6 @@ export class ValidatorSet<Vs extends AnyValidators> {
   }
 }
 
-export const validatorSet = <Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs> => {
-  return new ValidatorSet(validators);
-};
-
 export class ValidatorSetResult<Vs extends AnyValidators> {
   private _errors?: ErrorMessagesTree<Vs>;
 

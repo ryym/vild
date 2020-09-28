@@ -1,15 +1,28 @@
 import type { CheckerContainer } from './checker';
 import { createValidator } from './validator';
 import type { ChainValidator } from './validator';
+import { AnyValidators, ValidatorSet } from './validatorSet';
 import type { Messages } from './messages';
 
 type CheckerContainerSet = Record<string, CheckerContainer<any, any>>;
 
-export type Vild<Ccs extends CheckerContainerSet> = {
+export type CheckerChainSet<Ccs extends CheckerContainerSet> = {
   [K in keyof Ccs]: Ccs[K] extends CheckerContainer<infer V, infer Cs>
     ? () => ChainValidator<V, Cs>
     : never;
 };
+
+export interface VildDefaultMethods {
+  validatorSet<Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs>;
+}
+
+export type Vild<Ccs extends CheckerContainerSet> = CheckerChainSet<Ccs> & VildDefaultMethods;
+
+class VildBase implements VildDefaultMethods {
+  validatorSet = <Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs> => {
+    return new ValidatorSet(validators);
+  };
+}
 
 export type MessagesSet<Ccs extends CheckerContainerSet> = {
   [K in keyof Ccs]: Messages<Ccs[K]>;
@@ -33,14 +46,14 @@ export const createVild = <Ccs extends CheckerContainerSet>(
   };
 
   const containerSet = options.validators;
-  const vild: Vild<any> = {};
+  const chains: CheckerChainSet<any> = {};
   for (const name of Object.keys(containerSet)) {
     const container = containerSet[name];
     const validator = createValidator(container, {
       locale: () => state.locale,
       messages: () => state.messages[name],
     });
-    vild[name] = () => validator;
+    chains[name] = () => validator;
   }
 
   const config: VildConfig<Ccs> = {
@@ -50,5 +63,7 @@ export const createVild = <Ccs extends CheckerContainerSet>(
     },
   };
 
+  const vildBase = new VildBase();
+  const vild = (Object.assign(vildBase, chains) as unknown) as Vild<Ccs>;
   return [vild, config];
 };
