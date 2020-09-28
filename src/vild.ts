@@ -37,7 +37,7 @@ export type VildOptions<Ccs extends CheckerContainerSet> = {
   messages: MessagesSet<Ccs>;
 };
 
-export const createVild = <Ccs extends CheckerContainerSet>(
+export const createVildAndConfig = <Ccs extends CheckerContainerSet>(
   options: VildOptions<Ccs>
 ): [Vild<Ccs>, VildConfig<Ccs>] => {
   const state = {
