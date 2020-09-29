@@ -1,4 +1,4 @@
-import { isCheckResult, ValidationResult } from './checker';
+import { isCheckResult, ValidationResult, ValueConverter } from './checker';
 import type {
   Checker,
   CheckFn,
@@ -34,6 +34,23 @@ type CheckItem<V> = {
   readonly check: CheckFn<V>;
 };
 
+type ChainValidatorBaseOptions<V> = {
+  convert: ValueConverter<V>;
+  getLocale: () => string | undefined;
+  getMessage: MessageGenerator<V>;
+};
+
+class ChainValidatorBase<V> implements Validator<V> {
+  constructor(readonly _checks: CheckItem<V>[], readonly _options: ChainValidatorBaseOptions<V>) {}
+
+  test(originalValue: unknown, context?: unknown): ValidationResult<V> {
+    const converted = this._options.convert(originalValue);
+    const value = { original: originalValue, converted };
+    const meta = { context, locale: this._options.getLocale() };
+    return validateValue(value, this._checks, meta, this._options.getMessage);
+  }
+}
+
 export const createValidator = <V, Cs extends CheckerSet>(
   checkerContainer: CheckerContainer<V, Cs>,
   options: ValidatorOptions<Cs>
@@ -49,29 +66,26 @@ export const createValidator = <V, Cs extends CheckerSet>(
     return msg(...args);
   };
 
-  class ValidatorInner implements Validator<V> {
-    constructor(readonly _checks: CheckItem<V>[]) {}
+  const baseOptions: ChainValidatorBaseOptions<V> = {
+    convert,
+    getLocale: options.locale,
+    getMessage,
+  };
 
-    test(originalValue: unknown, context?: unknown): ValidationResult<V> {
-      const converted = convert(originalValue);
-      const value = { original: originalValue, converted };
-      const meta = { context, locale: options.locale() };
-      return validateValue(value, this._checks, meta, getMessage);
-    }
-  }
+  class ValidatorInner extends ChainValidatorBase<V> {}
 
   const chain: CheckerChain<V, CheckerSet<V>> = {};
   for (const name of Object.keys(checkers)) {
     chain[name] = function (this: ValidatorInner, ...args: any[]) {
       const check = checkers[name].checkWith(...args) as CheckFn<V>;
       const checks = [...this._checks, { name, check, args }];
-      return (new ValidatorInner(checks) as unknown) as ChainValidator<V, Cs>;
+      return (new ValidatorInner(checks, baseOptions) as unknown) as ChainValidator<V, Cs>;
     };
   }
 
   Object.assign(ValidatorInner.prototype, chain);
 
-  return (new ValidatorInner([]) as unknown) as ChainValidator<V, Cs>;
+  return (new ValidatorInner([], baseOptions) as unknown) as ChainValidator<V, Cs>;
 };
 
 type MessageGenerator<V> = (name: string, args: unknown[], result: CheckResult<V>) => string;
