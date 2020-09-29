@@ -46,7 +46,7 @@ export type CheckerContainer<V, Cs extends CheckerSet<V>> = {
   readonly convert: ValueConverter<V>;
 };
 
-export const checkerContainer = <V, Cs extends CheckerSet<V>>(
+export const defineCheckers = <V, Cs extends CheckerSet<V>>(
   convert: ValueConverter<V>,
   checkers: Cs
 ): CheckerContainer<V, Cs> => {

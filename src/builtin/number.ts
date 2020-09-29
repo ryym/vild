@@ -1,4 +1,4 @@
-import { checkerContainer, check } from '../checker';
+import { defineCheckers, check } from '../checker';
 import { Messages } from '../messages';
 
 export const convertToNumber = (val: unknown): number | undefined => {
@@ -19,7 +19,7 @@ export const convertToNumber = (val: unknown): number | undefined => {
   }
 };
 
-export const number = checkerContainer(convertToNumber, {
+export const number = defineCheckers(convertToNumber, {
   required: check(() => (val) => {
     const empty = val.original == false && val.original !== 0;
     return { ok: !empty };

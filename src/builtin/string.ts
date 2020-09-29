@@ -1,4 +1,4 @@
-import { checkerContainer, check } from '../checker';
+import { defineCheckers, check } from '../checker';
 import { Messages } from '../messages';
 
 export const convertToString = (val: unknown): string | undefined => {
@@ -8,7 +8,7 @@ export const convertToString = (val: unknown): string | undefined => {
   return String(val);
 };
 
-export const string = checkerContainer(convertToString, {
+export const string = defineCheckers(convertToString, {
   required: check(() => (val) => {
     return { ok: val.converted != null && val.converted.length > 0 };
   }),
