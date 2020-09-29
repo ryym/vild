@@ -1,7 +1,5 @@
 import { Checker, CheckerSet, CheckerContainer } from './checker';
 
-export type AnyMessages = Record<string, (...args: any[]) => string>;
-
 export type Messages<C extends CheckerContainer<any, CheckerSet>> = C extends CheckerContainer<
   any,
   infer Cs

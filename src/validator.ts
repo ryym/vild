@@ -5,9 +5,10 @@ import type {
   CheckedValue,
   CheckerSet,
   CheckerContainer,
+  CheckResult,
   ErrorInfo,
 } from './checker';
-import type { MessagesForCheckerSet, AnyMessages } from './messages';
+import type { MessagesForCheckerSet } from './messages';
 import type { Meta } from './meta';
 
 export type Validator<V> = {
@@ -39,6 +40,15 @@ export const createValidator = <V, Cs extends CheckerSet>(
 ): ChainValidator<V, Cs> => {
   const { checkers, convert } = checkerContainer;
 
+  const getMessage: MessageGenerator<V> = (name, args) => {
+    const msgs = options.messages();
+    const msg = msgs[name];
+    if (msg == null) {
+      throw new Error(`[vild] message function not defined for ${name}`);
+    }
+    return msg(...args);
+  };
+
   class ValidatorInner implements Validator<V> {
     constructor(readonly _checks: CheckItem<V>[]) {}
 
@@ -46,7 +56,7 @@ export const createValidator = <V, Cs extends CheckerSet>(
       const converted = convert(originalValue);
       const value = { original: originalValue, converted };
       const meta = { context, locale: options.locale() };
-      return validateValue(value, this._checks, meta, options.messages());
+      return validateValue(value, this._checks, meta, getMessage);
     }
   }
 
@@ -64,11 +74,13 @@ export const createValidator = <V, Cs extends CheckerSet>(
   return (new ValidatorInner([]) as unknown) as ChainValidator<V, Cs>;
 };
 
+type MessageGenerator<V> = (name: string, args: unknown[], result: CheckResult<V>) => string;
+
 const validateValue = <V>(
   firstValue: CheckedValue<V>,
   checks: CheckItem<V>[],
   meta: Meta,
-  msgs: AnyMessages
+  getMessage: MessageGenerator<V>
 ): ValidationResult<V> => {
   const errors: ErrorInfo[] = [];
   let value = firstValue;
@@ -79,7 +91,7 @@ const validateValue = <V>(
         value = { original: firstValue.original, converted: result.value };
       }
       if (!result.ok) {
-        const message = msgs[name](...args);
+        const message = getMessage(name, args, result);
         errors.push({ name, message });
         break;
       }
