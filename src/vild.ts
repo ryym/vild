@@ -1,5 +1,5 @@
-import type { CheckerContainer } from './checker';
-import { createValidator } from './validator';
+import type { CheckerContainer, ValueConverter } from './checker';
+import { createValidator, CustomValidator } from './validator';
 import type { ChainValidator } from './validator';
 import { AnyValidators, ValidatorSet } from './validatorSet';
 import type { Messages } from './messages';
@@ -12,15 +12,36 @@ export type CheckerChainSet<Ccs extends CheckerContainerSet> = {
     : never;
 };
 
+export interface CustomValidatorOptions<V> {
+  readonly convert?: ValueConverter<V>;
+}
+
 export interface VildDefaultMethods {
   validatorSet<Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs>;
+  custom<V>(options?: CustomValidatorOptions<V>): CustomValidator<V>;
 }
 
 export type Vild<Ccs extends CheckerContainerSet> = CheckerChainSet<Ccs> & VildDefaultMethods;
 
+interface VildBaseOptions {
+  getLocale(): string | undefined;
+}
+
 class VildBase implements VildDefaultMethods {
+  constructor(private readonly _options: VildBaseOptions) {}
+
   validatorSet = <Vs extends AnyValidators>(validators: Vs): ValidatorSet<Vs> => {
     return new ValidatorSet(validators);
+  };
+
+  custom = <V>(options: CustomValidatorOptions<V> = {}): CustomValidator<V> => {
+    return new CustomValidator([], {
+      convert: options.convert ?? CustomValidator.defaultConverter(),
+      getLocale: this._options.getLocale,
+      getMessage: (name, _args, result) => {
+        return result.message ?? `custom validation [${name}] failed`;
+      },
+    });
   };
 }
 
@@ -63,7 +84,7 @@ export const createVildAndConfig = <Ccs extends CheckerContainerSet>(
     },
   };
 
-  const vildBase = new VildBase();
+  const vildBase = new VildBase({ getLocale: () => state.locale });
   const vild = (Object.assign(vildBase, chains) as unknown) as Vild<Ccs>;
   return [vild, config];
 };

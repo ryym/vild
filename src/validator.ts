@@ -88,6 +88,17 @@ export const createValidator = <V, Cs extends CheckerSet>(
   return (new ValidatorInner([], baseOptions) as unknown) as ChainValidator<V, Cs>;
 };
 
+export class CustomValidator<V> extends ChainValidatorBase<V> {
+  static defaultConverter = <V>(): ValueConverter<V> => {
+    return (value) => value as V;
+  };
+
+  check(name: string, check: CheckFn<V>): CustomValidator<V> {
+    this._checks.push({ name, check, args: [] });
+    return this;
+  }
+}
+
 type MessageGenerator<V> = (name: string, args: unknown[], result: CheckResult<V>) => string;
 
 const validateValue = <V>(

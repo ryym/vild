@@ -14,7 +14,7 @@ export type ErrorInfo = {
   readonly message: string;
 };
 
-export type CheckResult<V> = { ok: boolean; value?: V };
+export type CheckResult<V> = { ok: boolean; value?: V; message?: string };
 
 export type CheckFn<V> = (
   value: CheckedValue<V>,
