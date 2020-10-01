@@ -6,6 +6,10 @@ export type CheckedValue<V> = {
 };
 
 export class ValidationResult<V> {
+  static default<V>(value: unknown): ValidationResult<V> {
+    return new ValidationResult<V>([], { converted: undefined, original: value });
+  }
+
   constructor(readonly errors: ErrorInfo[], readonly value: CheckedValue<V>) {}
 }
 

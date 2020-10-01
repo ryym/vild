@@ -70,7 +70,7 @@ export class ValidatorSet<Vs extends AnyValidators> {
           results[key] = (value as any[]).map((v) => this._testObject(v, validator0, context));
         }
       } else if (isValidator(validator)) {
-        results[key] = validator.test(value);
+        results[key] = key in values ? validator.test(value) : ValidationResult.default(undefined);
       } else {
         results[key] = this._testObject((value as any) ?? {}, validator, context);
       }
