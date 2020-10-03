@@ -5,12 +5,49 @@ export type CheckedValue<V> = {
   readonly converted: V | undefined;
 };
 
-export class ValidationResult<V> {
-  static default<V>(value: unknown): ValidationResult<V> {
-    return new ValidationResult<V>([], { converted: undefined, original: value });
+export type TestedValidationResult<V> =
+  | {
+      readonly ok: true;
+      readonly tested: true;
+      readonly errors: ErrorInfo[];
+      readonly value: { original: unknown; converted: V };
+    }
+  | {
+      readonly ok: false;
+      readonly tested: true;
+      readonly errors: ErrorInfo[];
+      readonly value: { original: unknown; converted: V | undefined };
+    };
+
+export type UntestedValidationResult = {
+  readonly ok: true;
+  readonly tested: false;
+  readonly errors: ErrorInfo[];
+  readonly value: undefined;
+};
+
+export type ValidationResult<V> = TestedValidationResult<V> | UntestedValidationResult;
+
+export const isValidationResult = <V>(result: unknown): result is ValidationResult<V> => {
+  return result instanceof ValidationResultEntity;
+};
+
+export class ValidationResultEntity<V> {
+  static untested(): UntestedValidationResult {
+    return new ValidationResultEntity<undefined>([]) as UntestedValidationResult;
   }
 
-  constructor(readonly errors: ErrorInfo[], readonly value: CheckedValue<V>) {}
+  static tested<V>(errors: ErrorInfo[], value: CheckedValue<V>): TestedValidationResult<V> {
+    return new ValidationResultEntity(errors, value) as TestedValidationResult<V>;
+  }
+
+  readonly ok: boolean;
+  readonly tested: boolean;
+
+  private constructor(readonly errors: ErrorInfo[], readonly value?: CheckedValue<V>) {
+    this.ok = errors.length === 0;
+    this.tested = value !== undefined;
+  }
 }
 
 export type ErrorInfo = {
@@ -23,7 +60,7 @@ export type CheckResult<V> = { ok: boolean; value?: V; message?: string };
 export type CheckFn<V> = (
   value: CheckedValue<V>,
   meta: Meta
-) => CheckResult<V> | ValidationResult<V>;
+) => CheckResult<V> | TestedValidationResult<V>;
 
 export class Checker<V, Args extends unknown[]> {
   constructor(readonly checkWith: (...args: Args) => CheckFn<V>) {}
@@ -36,7 +73,7 @@ export const check = <Args extends unknown[], V>(
 };
 
 export const isCheckResult = <V>(
-  result: CheckResult<V> | ValidationResult<V>
+  result: CheckResult<V> | TestedValidationResult<V>
 ): result is CheckResult<V> => {
   return 'ok' in result;
 };

@@ -1,4 +1,4 @@
-import { isCheckResult, ValidationResult, ValueConverter } from './checker';
+import { isCheckResult, ValidationResult, ValidationResultEntity, ValueConverter } from './checker';
 import type {
   Checker,
   CheckFn,
@@ -125,7 +125,7 @@ const validateValue = <V>(
       value = result.value;
     }
   }
-  return new ValidationResult(errors, value);
+  return ValidationResultEntity.tested(errors, value);
 };
 
 export const isValidator = <V>(v: Validator<V> | Record<string, unknown>): v is Validator<V> => {

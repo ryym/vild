@@ -1,4 +1,4 @@
-import { ValidationResult } from './checker';
+import { ValidationResult, ValidationResultEntity, isValidationResult } from './checker';
 import { Validator, isValidator } from './validator';
 
 export type AnyValidators = {
@@ -70,7 +70,7 @@ export class ValidatorSet<Vs extends AnyValidators> {
           results[key] = (value as any[]).map((v) => this._testObject(v, validator0, context));
         }
       } else if (isValidator(validator)) {
-        results[key] = key in values ? validator.test(value) : ValidationResult.default(undefined);
+        results[key] = key in values ? validator.test(value) : ValidationResultEntity.untested();
       } else {
         results[key] = this._testObject((value as any) ?? {}, validator, context);
       }
@@ -97,7 +97,7 @@ const mapResultsToErrors = (results: AnyValidationResult): AnyErrorMessages => {
   if (Array.isArray(results)) {
     return (results as AnyValidationResult[]).map((r) => mapResultsToErrors(r));
   }
-  if (results instanceof ValidationResult) {
+  if (isValidationResult(results)) {
     return results.errors.map((e) => e.message);
   }
   const errors = {} as Record<string, ErrorMessagesTree<any>>;
