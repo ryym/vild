@@ -18,10 +18,7 @@ export interface CustomValidatorOptions<V> {
 
 export interface VildDefaultMethods {
   custom<V>(options?: CustomValidatorOptions<V>): CustomValidator<V>;
-  testObject<Vs extends AnyValidators>(
-    values: Record<string, unknown>,
-    validators: Vs
-  ): ObjectValidationResult<Vs>;
+  testObject<Vs extends AnyValidators>(values: unknown, validators: Vs): ObjectValidationResult<Vs>;
 }
 
 export type Vild<Ccs extends CheckerContainerSet> = CheckerChainSet<Ccs> & VildDefaultMethods;
@@ -44,7 +41,7 @@ class VildBase implements VildDefaultMethods {
   };
 
   testObject = <Vs extends AnyValidators>(
-    values: Record<string, unknown>,
+    values: unknown,
     validators: Vs,
     context?: unknown
   ): ObjectValidationResult<Vs> => {

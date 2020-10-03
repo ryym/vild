@@ -18,11 +18,18 @@ export type ObjectValidationResult<Vs extends AnyValidators> = {
 };
 
 export const testObject = <Vs extends AnyValidators>(
-  values: Record<string, unknown>,
+  values: unknown,
   validators: Vs,
   context?: unknown
 ): ObjectValidationResult<Vs> => {
-  return _testObject(values, validators, context) as ObjectValidationResult<Vs>;
+  if (values != null && (typeof values !== 'object' || Array.isArray(values))) {
+    throw new Error('[vild] testObject accepts an object only');
+  }
+  return _testObject(
+    (values || {}) as Record<string, unknown>,
+    validators,
+    context
+  ) as ObjectValidationResult<Vs>;
 };
 
 const _testObject = (
