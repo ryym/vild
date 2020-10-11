@@ -1,7 +1,7 @@
 import type { CheckerContainer, ValueConverter } from './checker';
 import { createValidator, CustomValidator } from './validator';
 import type { ChainValidator } from './validator';
-import { testObject, ObjectValidationResult, AnyValidators } from './testObject';
+import { ValidatorSet, ValidatorDefinition } from './validatorSet';
 import type { Messages } from './messages';
 
 type CheckerContainerSet = Record<string, CheckerContainer<any, any>>;
@@ -18,7 +18,7 @@ export interface CustomValidatorOptions<V> {
 
 export interface VildDefaultMethods {
   custom<V>(options?: CustomValidatorOptions<V>): CustomValidator<V>;
-  testObject<Vs extends AnyValidators>(values: unknown, validators: Vs): ObjectValidationResult<Vs>;
+  validatorSet<Vs extends ValidatorDefinition>(validators: Vs): ValidatorSet<Vs>;
 }
 
 export type Vild<Ccs extends CheckerContainerSet> = CheckerChainSet<Ccs> & VildDefaultMethods;
@@ -40,12 +40,8 @@ class VildBase implements VildDefaultMethods {
     });
   };
 
-  testObject = <Vs extends AnyValidators>(
-    values: unknown,
-    validators: Vs,
-    context?: unknown
-  ): ObjectValidationResult<Vs> => {
-    return testObject(values, validators, context);
+  validatorSet = <Vs extends ValidatorDefinition>(validators: Vs): ValidatorSet<Vs> => {
+    return new ValidatorSet(validators);
   };
 }
 
