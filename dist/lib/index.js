@@ -10,6 +10,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.tmpTest = void 0;
 __exportStar(require("./builtin"), exports);
 __exportStar(require("./checker"), exports);
 __exportStar(require("./messages"), exports);
@@ -17,3 +18,4 @@ __exportStar(require("./meta"), exports);
 __exportStar(require("./validator"), exports);
 __exportStar(require("./validatorSet"), exports);
 __exportStar(require("./vild"), exports);
+exports.tmpTest = 123;

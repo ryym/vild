@@ -5,3 +5,4 @@ export * from './meta';
 export * from './validator';
 export * from './validatorSet';
 export * from './vild';
+export declare const tmpTest = 123;
